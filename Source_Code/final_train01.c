@@ -40,7 +40,6 @@ void registerAccount(struct passenger *p, int id) {
     
     printf("\n+-------------------------------------------------------------+\n");
     printf("| [+] ACCOUNT CREATED SUCCESSFULLY!                           |\n");
-    printf("|     Please proceed to Login.                                |\n");
     printf("+-------------------------------------------------------------+\n");
 }
 
@@ -55,33 +54,33 @@ void customerInfo(struct passenger *ticketHolder, int accountId) {
     do { printf("Phone (11 digits): "); scanf("%19s",ticketHolder->phone); } while (!phonechk(ticketHolder->phone));
 }
 
-void services(struct passenger *p) {
+void recursiveServices(struct passenger *p, int sFood, int sPet, int sLux, int sLug, int sWifi) {
     int choice;
-    p->serviceCost = 0;
-    int sFood = 0, sPet = 0, sLux = 0, sLug = 0, sWifi = 0;
     
     printf("\n+-------------------------------------------------------------+\n");
     printf("|                    EXTRA SERVICES                           |\n");
     printf("+-------------------------------------------------------------+\n");
-    while(1) {
-        printf("\nCurrent Add-on Total: Rs. %.2f\n", p->serviceCost);
-        printf("   [1] Food (Rs. 500)          %s\n", sFood ? "<- ADDED" : "");
-        printf("   [2] Pet Transport (Rs. 200) %s\n", sPet ? "<- ADDED" : "");
-        printf("   [3] Luxury Car (Rs. 1000)   %s\n", sLux ? "<- ADDED" : "");
-        printf("   [4] Extra Luggage (Rs. 300) %s\n", sLug ? "<- ADDED" : "");
-        printf("   [5] Onboard Wi-Fi (Rs. 150) %s\n", sWifi ? "<- ADDED" : "");
-        printf("   [0] Done selecting\n");
-        printf("Choose: ");
-        if (scanf("%d",&choice) != 1) { clearBuffer(); continue; }
-        if (choice == 0) break;
-        switch(choice) {
-            case 1: if(!sFood) { p->serviceCost += 500; sFood = 1; } break;
-            case 2: if(!sPet) { p->serviceCost += 200; sPet = 1; } break;
-            case 3: if(!sLux) { p->serviceCost += 1000; sLux = 1; } break;
-            case 4: if(!sLug) { p->serviceCost += 300; sLug = 1; } break;
-            case 5: if(!sWifi) { p->serviceCost += 150; sWifi = 1; } break;
-        }
+    printf("\nCurrent Add-on Total: Rs. %.2f\n", p->serviceCost);
+    printf("   [1] Food (Rs. 500)          %s\n", sFood ? "<- ADDED" : "");
+    printf("   [2] Pet Transport (Rs. 200) %s\n", sPet ? "<- ADDED" : "");
+    printf("   [3] Luxury Car (Rs. 1000)   %s\n", sLux ? "<- ADDED" : "");
+    printf("   [4] Extra Luggage (Rs. 300) %s\n", sLug ? "<- ADDED" : "");
+    printf("   [5] Onboard Wi-Fi (Rs. 150) %s\n", sWifi ? "<- ADDED" : "");
+    printf("   [0] Done selecting\n");
+    printf("Choose: ");
+    
+    if (scanf("%d",&choice) != 1) { clearBuffer(); recursiveServices(p, sFood, sPet, sLux, sLug, sWifi); return; }
+    if (choice == 0) return; 
+    
+    switch(choice) {
+        case 1: if(!sFood) { p->serviceCost += 500; sFood = 1; } break;
+        case 2: if(!sPet) { p->serviceCost += 200; sPet = 1; } break;
+        case 3: if(!sLux) { p->serviceCost += 1000; sLux = 1; } break;
+        case 4: if(!sLug) { p->serviceCost += 300; sLug = 1; } break;
+        case 5: if(!sWifi) { p->serviceCost += 150; sWifi = 1; } break;
     }
+    
+    recursiveServices(p, sFood, sPet, sLux, sLug, sWifi); 
 }
 
 void billing(struct passenger *p) {
@@ -104,6 +103,7 @@ void receipt(struct passenger *p) {
     printf(" ACCOUNT EMAIL  : %s\n", p->email);
     printf("---------------------------------------------------------------\n");
     printf(" PASSENGER NAME : %s\n", p->name);
+    printf(" SEAT NUMBER    : Standard\n"); // REMOVED 2D ARRAY SEAT
     printf(" AGE            : %d\n", p->age);
     printf(" PHONE          : %s\n", p->phone);
     printf("---------------------------------------------------------------\n");
@@ -144,7 +144,7 @@ void booking(struct passenger *accountUser, char *bookedByEmail, int isStaffBook
         printf("[!] Invalid Station. Try again.\n");
     }
 
-    printf("\n"); // ADDED SPACE HERE
+    printf("\n"); 
     
     while (1) {
         printf("Select Destination Station (1-5): "); scanf(" %29[^\n]", destination);
@@ -197,10 +197,11 @@ void booking(struct passenger *accountUser, char *bookedByEmail, int isStaffBook
     struct tm *tm = localtime(&t);
     sprintf(ticketHolder.bookingDate, "%02d/%02d/%04d", tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
     
-    services(&ticketHolder);
+    recursiveServices(&ticketHolder, 0, 0, 0, 0, 0); 
+
     billing(&ticketHolder);
     receipt(&ticketHolder); 
-    
+
     p[passengerCount] = ticketHolder;
     passengerCount++;
 }
@@ -244,7 +245,7 @@ void displayCustomers(struct passenger *p, int count) {
 }
 
 void updateCustomer(struct passenger p[], int count) {
-    int id, i;
+    int id, i, j;
     char newEmail[50];
     printf("Enter Account ID to update: "); 
     if(scanf("%d", &id) != 1) { clearBuffer(); return; }
@@ -253,7 +254,6 @@ void updateCustomer(struct passenger p[], int count) {
         if(p[i].customerId == id && p[i].ticketId == 0) {
             printf("Enter New Email: "); 
             scanf("%49s", newEmail);
-            int j;
             for(j=0; j<count; j++) {
                 if(p[j].customerId == id) {
                     strcpy(p[j].email, newEmail);
@@ -287,7 +287,7 @@ void deleteCustomer(struct passenger p[], int *count) {
 }
 
 void checkCustomerStatus(struct passenger *accountUser) {
-    int i, found = 0;
+    int i, found = 0, depHour = 0, depMin = 0, trainTotalMins, diffMins;
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
     int currentHour = tm->tm_hour;
@@ -306,7 +306,7 @@ void checkCustomerStatus(struct passenger *accountUser) {
     for(i = 0; i < passengerCount; i++) {
         if(strcmp(p[i].email, accountUser->email) == 0 && p[i].booked) {
             found = 1;
-            int depHour = 0, depMin = 0;
+            depHour = 0; depMin = 0;
             if (strstr(p[i].trainTime, "08:00 AM")) { depHour = 8; depMin = 0; }
             else if (strstr(p[i].trainTime, "10:30 AM")) { depHour = 10; depMin = 30; }
             else if (strstr(p[i].trainTime, "01:00 PM")) { depHour = 13; depMin = 0; }
@@ -316,10 +316,9 @@ void checkCustomerStatus(struct passenger *accountUser) {
             else if (strstr(p[i].trainTime, "10:00 PM")) { depHour = 22; depMin = 0; }
             else if (strstr(p[i].trainTime, "11:45 PM")) { depHour = 23; depMin = 45; }
 
-            int trainTotalMins = (depHour * 60) + depMin;
-            int diffMins = trainTotalMins - currentTotalMins;
+            trainTotalMins = (depHour * 60) + depMin;
+            diffMins = trainTotalMins - currentTotalMins;
 
-            // ADDED SPACING HERE
             printf("\nTicket #%d | Train: %s | Route: %s -> %s\n", p[i].ticketId, p[i].trainName, p[i].departure, p[i].destination);
             printf("Booking Date: %s\n", p[i].bookingDate);
             
