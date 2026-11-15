@@ -4,49 +4,83 @@ char currentStaffEmail[50];
 
 int errorChk(char *str1, char *str2){ return strcmp(str1, str2) == 0 ? 1 : 0; } 
 
-int staffLogin(void){
-    char email[50], pass[21];
-    printf("\n--- STAFF LOGIN ---\n");
-    printf("Email: "); scanf("%49s", email);
-    printf("Password: "); getHiddenPassword(pass, 20);
-    
-    if (strcmp(pass, "f4d19ead") != 0) { printf("Invalid Password!\n"); return 0; }
-    if (strcmp(email, "anusha@gmail.com") == 0 || strcmp(email, "fatima1@gmail.com") == 0 || 
-        strcmp(email, "fatima2@gmail.com") == 0 || strcmp(email, "sameer@gmail.com") == 0) {
-        
-        strcpy(currentStaffEmail, email);
-        printf("\nLogin Successful!\n"); return 1;
+void lockoutTimerStaff() {
+    printf("\n[!] LOCKED OUT. Too many failed attempts.\n");
+    printf("Please wait 30 seconds...\n\n");
+    int i;
+    for (i = 30; i > 0; i--) {
+        printf("\rTime remaining: %02d seconds ", i);
+        fflush(stdout);
+        Sleep(1000); 
     }
-    printf("Invalid Email.\n"); return 0;
+    printf("\rTime remaining: 00 seconds\n\n");
+    printf("[+] You may try logging in again.\n");
 }
 
+int staffLogin(void){
+    char email[50], pass[21];
+    int attempts = 0;
+    
+    while (attempts < 3) {
+        printf("\n--- STAFF LOGIN ---\n");
+        printf("Email: "); scanf("%49s", email);
+        printf("Password: "); getHiddenPassword(pass, 20);
+        
+        int validEmail = (strcmp(email, "anusha@gmail.com") == 0 || 
+                          strcmp(email, "fatima1@gmail.com") == 0 || 
+                          strcmp(email, "fatima2@gmail.com") == 0 || 
+                          strcmp(email, "sameer@gmail.com") == 0);
+        
+        if (strcmp(pass, "f4d19ead") == 0 && validEmail) {
+            strcpy(currentStaffEmail, email);
+            printf("\nLogin Successful!\n"); 
+            return 1;
+        } else {
+            attempts++;
+            printf("\n[!] Invalid Credentials. Attempt %d of 3.\n", attempts);
+        }
+    }
+    
+    lockoutTimerStaff();
+    return 0;
+}
+
+// --- 2D ARRAY IN ACTION: TRAIN STATUS MATRIX ---
 void staffLiveBoard(void) {
-    time_t t = time(NULL);
-    struct tm *tm = localtime(&t);
-    int currentTotalMins = (tm->tm_hour * 60) + tm->tm_min;
+    // 2D Array: 8 trains, 3 statuses (Scheduled, Running, Arrived)
+    // 1 means true, 0 means false
+    int trainStatus[8][3] = {
+        {1, 0, 0}, // Star Rail: Scheduled
+        {1, 0, 0}, // Rika Express: Scheduled
+        {0, 1, 0}, // The Blue Ray: Running
+        {1, 0, 0}, // Magarink: Scheduled
+        {1, 0, 0}, // Ascend 600: Scheduled
+        {1, 0, 0}, // SAO Unit: Scheduled
+        {1, 0, 0}, // Blitz Express: Scheduled
+        {1, 0, 0}  // Zegabound 60: Scheduled
+    };
+    
+    char *names[] = {"Star Rail", "Rika Express", "The Blue Ray", "Magarink", "Ascend 600", "SAO Unit", "Blitz Express", "Zegabound 60"};
+    char *times[] = {"08:00 AM", "10:30 AM", "01:00 PM", "03:30 PM", "06:00 PM", "08:15 PM", "10:00 PM", "11:45 PM"};
 
     printf("\n===============================================================\n");
     printf("||               STAFF LIVE TRAIN BOARD                       ||\n");
     printf("===============================================================\n");
-    printf(" System Time: %02d:%02d\n", tm->tm_hour, tm->tm_min);
+    printf(" Legend: [Sch] = Scheduled | [Run] = Running | [Arr] = Arrived\n");
     printf("---------------------------------------------------------------\n");
-
-    int times[] = {480, 630, 780, 930, 1080, 1215, 1320, 1425}; 
-    char *names[] = {"Star Rail", "Rika Express", "The Blue Ray", "Magarink", "Ascend 600", "SAO Unit", "Blitz Express", "Zegabound 60"};
-    char *stringTimes[] = {"08:00 AM", "10:30 AM", "01:00 PM", "03:30 PM", "06:00 PM", "08:15 PM", "10:00 PM", "11:45 PM"};
-
+    
     int i;
     for(i = 0; i < 8; i++) {
-        int diff = times[i] - currentTotalMins;
-        printf("Train: %-15s | Time: %-10s | Status: ", names[i], stringTimes[i]);
+        printf(" %-15s | %-10s | Status Matrix: [%d][%d][%d] ", names[i], times[i], 
+               trainStatus[i][0], trainStatus[i][1], trainStatus[i][2]);
         
-        if (diff > 60) printf("[SCHEDULED] Departs in %d hrs %d mins\n", diff/60, diff%60);
-        else if (diff > 0) printf("[BOARDING] Departs in %d mins\n", diff);
-        else if (diff > -120) printf("[RUNNING] On track. ETA: %d mins\n", 120 + diff);
-        else printf("[ARRIVED] Journey complete.\n");
+        if (trainStatus[i][0] == 1) printf("-> [SCHEDULED]\n");
+        else if (trainStatus[i][1] == 1) printf("-> [RUNNING]\n");
+        else if (trainStatus[i][2] == 1) printf("-> [ARRIVED]\n");
     }
     printf("===============================================================\n");
 }
+// ---------------------------------------------
 
 void staffBookTicket(void) {
     printf("\n--- BOOK TICKET ---\n");
@@ -56,18 +90,28 @@ void staffBookTicket(void) {
 }
 
 void manageTickets(void) {
-    int tId, i, found = 0;
-    printf("\n--- MANAGE ACTIVE TICKETS ---\n");
+    int tId, i, j, found = 0;
+    
+    // Bubble Sort
+    for (i = 0; i < passengerCount - 1; i++) {
+        for (j = 0; j < passengerCount - i - 1; j++) {
+            if (p[j].ticketId > p[j+1].ticketId) {
+                struct passenger temp = p[j];
+                p[j] = p[j+1];
+                p[j+1] = temp;
+            }
+        }
+    }
+
+    printf("\n--- MANAGE ACTIVE TICKETS (SORTED BY ID) ---\n");
     for(i=0; i<passengerCount; i++) {
         if(p[i].booked) {
-            // BETTER SPACING HERE
             printf("\n===============================================================\n");
             printf("Ticket #%d | Passenger: %s | Train: %s\n", p[i].ticketId, p[i].name, p[i].trainName);
             printf("Booked By (Email): %s\n", p[i].email);
             printf("Route: %s -> %s | Time: %s | Date: %s\n", p[i].departure, p[i].destination, p[i].trainTime, p[i].bookingDate);
             if (p[i].cancelled == 1) printf("[!!!] CANCELLATION REQUESTED [!!!]\n");
             printf("===============================================================\n\n");
-            
             found = 1;
         }
     }
@@ -118,11 +162,10 @@ void staffMenu(void) {
                     
                     if (dashChoice == 1) {
                         printf("\n--- CUSTOMER ACCOUNTS ---\n");
-                        printf("1. View All\n2. Update Email\n3. Delete Account\n4. Back\nChoice: ");
+                        printf("1. View All\n2. Delete Account\n3. Back\nChoice: ");
                         if (scanf("%d", &a) != 1) { clearBuffer(); continue; }
                         if(a==1) displayCustomers(p, passengerCount);
-                        if(a==2) updateCustomer(p, passengerCount);
-                        if(a==3) deleteCustomer(p, &passengerCount);
+                        if(a==2) deleteCustomer(p, &passengerCount);
                     } else if (dashChoice == 2) {
                         manageTickets();
                     } else if (dashChoice == 3) {
