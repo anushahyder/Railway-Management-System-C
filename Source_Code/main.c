@@ -7,6 +7,19 @@ int nextTicketID = 5001;
 struct staff *staff_floor = NULL;
 int pcount = 0;
 
+void lockoutTimer() {
+    printf("\n[!] LOCKED OUT. Too many failed attempts.\n");
+    printf("Please wait 30 seconds...\n\n");
+    int i;
+    for (i = 30; i > 0; i--) {
+        printf("\rTime remaining: %02d seconds ", i);
+        fflush(stdout);
+        Sleep(1000); 
+    }
+    printf("\rTime remaining: 00 seconds\n\n");
+    printf("[+] You may try logging in again.\n");
+}
+
 int main() {
     int choice, custChoice;
     int i, idx, action;
@@ -54,19 +67,40 @@ int main() {
                 nextCustomerID++;
             } 
             else if (custChoice == 2) {
-                printf("\n--- SECURE LOGIN ---\n");
-                printf("Email: "); scanf("%49s", loginInput);
-                printf("Password: "); getHiddenPassword(pass, 49);
-                
+                int attempts = 0;
                 idx = -1;
-                for (i = 0; i < passengerCount; i++) { 
-                    if (strcmp(p[i].email, loginInput) == 0 && strcmp(p[i].password, pass) == 0) {
-                        idx = i; break;
+                
+                while (attempts < 3) {
+                    printf("\n--- SECURE LOGIN ---\n");
+                    printf("Enter '0' in Email to cancel and go back.\n");
+                    printf("Email: "); scanf("%49s", loginInput);
+                    
+                    if (strcmp(loginInput, "0") == 0) {
+                        printf("\n[+] Login cancelled.\n");
+                        break; 
+                    }
+                    
+                    printf("Password: "); getHiddenPassword(pass, 49);
+                    
+                    for (i = 0; i < passengerCount; i++) { 
+                        if (strcmp(p[i].email, loginInput) == 0 && strcmp(p[i].password, pass) == 0) {
+                            idx = i; break;
+                        }
+                    }
+                    
+                    if (idx != -1) {
+                        printf("\n[+] Login Successful. Welcome back!\n");
+                        break;
+                    } else {
+                        attempts++;
+                        printf("\n[!] Invalid Email or Password. Attempt %d of 3.\n", attempts);
                     }
                 }
                 
-                if (idx != -1) {
-                    printf("\n[+] Login Successful. Welcome back!\n");
+                if (attempts == 3) {
+                    lockoutTimer(); 
+                }
+                else if (idx != -1) {
                     while(1) {
                         printf("\n+-------------------------------------------------------------+\n");
                         printf("|                   CUSTOMER DASHBOARD                        |\n");
@@ -84,8 +118,6 @@ int main() {
                         else if (action == 3) cancelRequest(&p[idx]);
                         else if (action == 4) break;
                     }
-                } else {
-                    printf("\n[!] Invalid Email or Password.\n");
                 }
             }
         } 
@@ -109,8 +141,14 @@ int main() {
                 fwrite(&nextCustomerID, sizeof(int), 1, fp);
                 fwrite(&nextTicketID, sizeof(int), 1, fp);
                 fwrite(p, sizeof(struct passenger), passengerCount, fp);
-                fclose(fp);
+                fclose(fp); 
             }
+            
+            if (staff_floor != NULL) {
+                free(staff_floor);
+                staff_floor = NULL; 
+            }
+            
             printf("\n[+] Data saved securely. Goodbye!\n");
             return 0;
         }
