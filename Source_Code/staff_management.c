@@ -92,7 +92,7 @@ void staffBookTicket(void) {
 void manageTickets(void) {
     int tId, i, j, found = 0;
     
-    // Bubble Sort
+    // Bubble Sort (only works with full count minus one)
     for (i = 0; i < passengerCount - 1; i++) {
         for (j = 0; j < passengerCount - i - 1; j++) {
             if (p[j].ticketId > p[j+1].ticketId) {
