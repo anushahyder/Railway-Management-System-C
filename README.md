@@ -24,3 +24,8 @@ Since the project uses multiple files, it is compiled and run using GCC:
 gcc Source_Code/main.c Source_Code/final_train01.c Source_Code/staff_management.c -o RailwaySystem
 ./RailwaySystem
 
+## Live Web Mockup
+You can view the interactive frontend prototype of this project here:
+[Railway System Web Mockup](https://anushahyd.github.io/Railway-Management-System-C/)
+
+
