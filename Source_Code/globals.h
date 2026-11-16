@@ -6,7 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <conio.h> 
+#include <conio.h> // for hidden password
 #include <windows.h>
 
 struct passenger {
@@ -23,10 +23,12 @@ struct passenger {
     char destination[30];
     char bookingDate[20];
     char notification[200]; 
+    int seatno;          
     int booked;
     int cancelled;
     float Fare;
     float serviceCost;
+    float discount;     // <--- ADDED DISCOUNT HERE
     float totalBill;
     float gst;
     float finalBill;
@@ -43,8 +45,6 @@ extern int nextCustomerID;
 extern int nextTicketID;
 extern struct staff *staff_floor;
 extern int pcount;
-
-// NO SEAT MATRIX HERE ANYMORE
 
 void staffMenu(void);
 int staffLogin(void);
