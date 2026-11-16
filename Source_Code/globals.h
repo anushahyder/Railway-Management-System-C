@@ -6,7 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-//#include <conio.h> // for hidden password
+#include <conio.h> // for hidden password
 #include <windows.h>
 
 struct passenger {
