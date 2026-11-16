@@ -7,6 +7,9 @@ void getHiddenPassword(char *password, int maxLength) {
     char ch;
     while (1) {
         ch = _getch();
+        
+    // _getch instead of getch because it is a windows convention
+    
         if (ch == 13) { 
             password[i] = '\0';
             printf("\n");
@@ -26,6 +29,8 @@ void getHiddenPassword(char *password, int maxLength) {
 int phonechk(char phone[]) { int i; if (strlen(phone) != 11) return 0; for (i = 0; phone[i] != '\0'; i++) if (!isdigit((unsigned char)phone[i])) return 0; return 1; }
 int emailchk(char email[]) { int i, at = -1, dot = -1; for (i = 0; email[i] != '\0'; i++) { if (email[i] == '@') { if (at != -1) return 0; at = i; } if (email[i] == '.') dot = i; } return (at > 0 && dot > at + 1 && email[dot + 1] != '\0'); }
 int namechk(char name[]) { int i; for (i = 0; name[i] != '\0'; i++) { if (!isalpha(name[i]) && name[i] != ' ') return 0; } return 1; }
+
+// to bypass the lower and upper case scenario so the program doesnt turn away the value just because its in caps lock
 int compareIgnoreCase(char *str1, char *str2) { int i; for (i = 0; str1[i] && str2[i]; i++) { if (tolower(str1[i]) != tolower(str2[i])) return 0; } return str1[i] == '\0' && str2[i] == '\0'; }
 
 void registerAccount(struct passenger *p, int id) {
@@ -87,6 +92,7 @@ void billing(struct passenger *p) {
     float discount = 0;
     p->totalBill = p->Fare + p->serviceCost;
     if(p->age >= 60) discount = p->totalBill * 0.50;
+    p->discount = discount; // Save discount for receipt
     p->totalBill -= discount;
     p->gst = p->totalBill * 0.20;
     p->finalBill = p->totalBill + p->gst;
@@ -103,7 +109,7 @@ void receipt(struct passenger *p) {
     printf(" ACCOUNT EMAIL  : %s\n", p->email);
     printf("---------------------------------------------------------------\n");
     printf(" PASSENGER NAME : %s\n", p->name);
-    printf(" SEAT NUMBER    : Standard\n"); // REMOVED 2D ARRAY SEAT
+    printf(" SEAT NUMBER    : Standard\n"); 
     printf(" AGE            : %d\n", p->age);
     printf(" PHONE          : %s\n", p->phone);
     printf("---------------------------------------------------------------\n");
@@ -114,10 +120,23 @@ void receipt(struct passenger *p) {
     printf("---------------------------------------------------------------\n");
     printf(" BASE FARE      : Rs. %.2f\n", p->Fare);
     printf(" ADD-ONS        : Rs. %.2f\n", p->serviceCost);
+    
+    // SHOW DISCOUNT IF APPLIED
+    if (p->discount > 0) {
+        printf(" DISCOUNT (50%%) : -Rs. %.2f\n", p->discount);
+    }
+    
     printf(" GST (20%%)      : Rs. %.2f\n", p->gst);
     printf("---------------------------------------------------------------\n");
     printf(" TOTAL          : Rs. %.2f\n", p->finalBill);
     printf("===============================================================\n");
+    
+    // SHOW IF BOOKED BY STAFF
+    if (strstr(p->email, "sameer") || strstr(p->email, "anusha") || 
+        strstr(p->email, "fatima1") || strstr(p->email, "fatima2")) {
+        printf(" [i] NOTE: This ticket was booked by a Staff Member.\n");
+        printf("===============================================================\n");
+    }
 }
 
 void booking(struct passenger *accountUser, char *bookedByEmail, int isStaffBooking) {
