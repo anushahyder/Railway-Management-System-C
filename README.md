@@ -16,6 +16,11 @@ A fully functional console-based Railway Management System built in C. It featur
 *   **Staff Dashboard:** Staff can manage customer accounts, view all bookings, and authorize cancellations.
 *   **File Handling:** All user and ticket data is permanently saved to `customer_db.dat`.
 
+## Live Web Mockup
+You can view the interactive frontend prototype of this project here:
+[Railway System Web Mockup](https://anushahyd.github.io/Railway-Management-System-C/)
+
+
 ## How to Compile and Run
 
 (Alternatively, open the .dev project file in Dev-C++ and press F11 to compile and run.)
@@ -23,9 +28,5 @@ Since the project uses multiple files, it is compiled and run using GCC:
 ```bash
 gcc Source_Code/main.c Source_Code/final_train01.c Source_Code/staff_management.c -o RailwaySystem
 ./RailwaySystem
-
-## Live Web Mockup
-You can view the interactive frontend prototype of this project here:
-[Railway System Web Mockup](https://anushahyd.github.io/Railway-Management-System-C/)
 
 
