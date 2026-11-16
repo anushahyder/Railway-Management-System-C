@@ -62,6 +62,11 @@ int main() {
             if (scanf("%d", &custChoice) != 1) { clearBuffer(); continue; }
             
             if (custChoice == 1) {
+                if (staff_floor == NULL) {
+                    staff_floor = (struct staff *)malloc(10 * sizeof(struct staff));
+                } else {
+                    staff_floor = (struct staff *)realloc(staff_floor, (pcount + 10) * sizeof(struct staff));
+                }
                 registerAccount(&p[passengerCount], nextCustomerID);
                 passengerCount++;
                 nextCustomerID++;
@@ -142,6 +147,8 @@ int main() {
                 fwrite(&nextTicketID, sizeof(int), 1, fp);
                 fwrite(p, sizeof(struct passenger), passengerCount, fp);
                 fclose(fp); 
+            } else {
+                printf("\n[!] Error: Could not open file to save data.\n");
             }
             
             if (staff_floor != NULL) {
